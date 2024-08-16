@@ -11,6 +11,9 @@ import {
   Paper,
   Breadcrumbs,
   Link,
+  Checkbox,
+  FormControlLabel,
+  FormGroup,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -51,6 +54,7 @@ const Dashboard = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRange, setSelectedRange] = useState('2'); // State for time range
+  const [checkedCategories, setCheckedCategories] = useState([]);
 
   useEffect(() => {
     fetch('/data.json')
@@ -76,6 +80,15 @@ const Dashboard = () => {
     setSelectedRange(event.target.value);
   };
 
+  const handleCheckboxChange = (event) => {
+    const categoryName = event.target.name;
+    setCheckedCategories((prevChecked) =>
+      prevChecked.includes(categoryName)
+        ? prevChecked.filter((name) => name !== categoryName)
+        : [...prevChecked, categoryName]
+    );
+  };
+
   const renderChart = (widget) => {
     switch (widget.type) {
       case 'pie':
@@ -93,7 +106,7 @@ const Dashboard = () => {
     }
   };
 
-  // Filter widgets based on the search query
+  // Filter widgets based on the search query and checked categories
   const filteredCategories = categories
     .map((category) => ({
       ...category,
@@ -101,7 +114,11 @@ const Dashboard = () => {
         widget.name.toLowerCase().includes(searchQuery.toLowerCase())
       ),
     }))
-    .filter((category) => category.widgets.length > 0 || searchQuery === ''); // Show all categories if no search query
+    .filter(
+      (category) =>
+        (checkedCategories.length === 0 || checkedCategories.includes(category.name)) &&
+        (category.widgets.length > 0 || searchQuery === '')
+    );
 
   return (
     <Box sx={{ padding: 2 }}>
@@ -212,6 +229,21 @@ const Dashboard = () => {
           <Typography variant="h6" gutterBottom>
             Add Widget
           </Typography>
+          <FormGroup>
+            {categories.map((category) => (
+              <FormControlLabel
+                key={category.name}
+                control={
+                  <Checkbox
+                    checked={checkedCategories.includes(category.name)}
+                    onChange={handleCheckboxChange}
+                    name={category.name}
+                  />
+                }
+                label={category.name}
+              />
+            ))}
+          </FormGroup>
           <TextField
             label="Widget Name"
             fullWidth
